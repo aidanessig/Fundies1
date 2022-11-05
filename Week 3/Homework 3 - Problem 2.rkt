@@ -1,0 +1,49 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-beginner-reader.ss" "lang")((modname |Homework 3 - Problem 2|) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+; == Homework 3, Problem 2 ==
+
+; TODO: design the function command-point that accepts a command
+; ("left", "right", "up", "down"), an (x, y) position,
+; and a non-negative distance and produces a new point moving
+; according to the command and distance. For example, if you
+; start at (2, 3), the command "left" 1 should produce (1, 3),
+; whereas "down" 2.2 would produce (2, 5.2).
+;
+; You should design whatever data is necessary for this function
+; and, as always, remember to follow the templates in your function
+; implementation (hint: if your command-point function is getting
+; large and repetitive, you are likely not following the templates
+; and need a helper).
+
+; A Position is a (make-posn Nat Nat)
+; Interpretation: a 2d location
+
+(define POSN-0 (make-posn 2 7))
+(define POSN-1 (make-posn -1 3))
+
+(define (posn-temp p)
+  (... (posn-x p)
+       (posn-y p) ...))
+
+; A direction is one of:
+; - "left"
+; - "right"
+; - "up"
+; - "down"
+; Interpretation: represents the direction
+; a Position should be changed
+
+; command-point : Position String Num -> Position
+; changes position relative to the direction given
+(define (command-point p direction v)
+  (cond
+    [(string=? "left" direction) (make-posn (- (posn-x p) v) (posn-y p))]
+    [(string=? "right" direction) (make-posn (+ (posn-x p) v) (posn-y p))]
+    [(string=? "up" direction) (make-posn (posn-x p) (+ (posn-y p) v))]
+    [(string=? "down" direction) (make-posn (posn-x p) (- (posn-y p) v))]))
+
+(check-expect (command-point POSN-0 "right" 3) (make-posn 5 7))
+(check-expect (command-point POSN-1 "left" 1) (make-posn -2 3))
+(check-expect (command-point POSN-0 "down" 4) (make-posn 2 3))
+(check-expect (command-point POSN-1 "up" 2) (make-posn -1 5))

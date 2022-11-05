@@ -1,0 +1,174 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-beginner-reader.ss" "lang")((modname |Homework 5 - Problem 2|) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+(require 2htdp/image)
+(require 2htdp/universe)
+
+; == Homework 5, Problem 2 ==
+
+; You are to design a reminders program, which
+; allows you to keep track of all the tasks in
+; your busy digital life.
+
+; In this program, a Group is an organizational unit
+; that has a title (such as "Today") and a list of tasks.
+; Each Task has it's own descriptive name (such as
+; "Submit Homework 5") as well as an indication of whether
+; the task has been completed or not.
+
+; When you run reminders, you supply it a group; the
+; program should then show you the group's title and
+; the first task (including it's description and some
+; way of indicating whether it's been completed or not);
+; if the task list is empty, a friendly congratulations
+; might be in order ;)
+;
+; Pressing the "n" key on the keyboard (for "next") should
+; allow you to scroll through the tasks in order - it should
+; cycle such that after seeing the last task, you come back to
+; the first. When viewing a task, pressing space bar toggles
+; whether the task is complete or not. When the program ends,
+; it should return the number of tasks in the group that are
+; incomplete.
+
+; TODO #1: Finish designing the data you will need for this program.
+; It will be useful (and fun!) to have a reasonable number of
+; examples.
+
+; A desc is one of:
+; - "Water the Plants"
+; - "Feed the Dog"
+; - "Go to Gym"
+; - "Brush Teeth"
+; Interpretation: describes a task
+
+; A done? is one of:
+; - #true
+; - #false
+; Interpretation: whether a task is completed
+
+(define-struct task [desc done?])
+
+; A Task is a (make-task String Boolean)
+; - desc is the task description
+; - done? is whether task is completed or not
+; Interpretation: a task and whether it is complete
+
+; task-temp : task -> ?
+(define (task-temp t)
+  (... (task-desc t)
+       (task-done? t) ...))
+
+(define TASK-1 (make-task "Take Shower" #true))
+(define TASK-2 (make-task "Eat Breakfast" #true))
+(define TASK-3 (make-task "Read News" #false))
+(define TASK-4 (make-task "Feed Fish" #false))
+
+(define TASK-5 (make-task "Complete Fundies" #false))
+(define TASK-6 (make-task "Complete T&HV" #true))
+(define TASK-7 (make-task "Complete Discrete" #true))
+(define TASK-8 (make-task "Complete Cultures" #true))
+
+; A ListOfTasks (LoT) is one of:
+; - '()
+; - (cons Task LoT)
+; Interpretation: a list of tasks
+
+; process-LoT : ListofTasks -> ?
+(define (process-LoT LoT)
+  (cond
+    [(empty? LoT) ...]
+    [(cons? LoT) (... (first LoT)
+                      (process-LoT (rest LoT)) ...)]))
+
+(define List-Morning (list TASK-1 TASK-2 TASK-3 TASK-4))
+(define List-Homework (list TASK-5 TASK-6 TASK-7 TASK-8))
+
+(define-struct group [title LoT])
+
+; A Group is a (make-group title LoT)
+; - title is the collective title of tasks
+; - LoT is a ListofTasks
+; Interpretation: a titled task list
+
+; group-temp : group -> ?
+(define (group-temp g)
+  (... (group-title g)
+       (group-LoT g) ...))
+
+(define Group-Morning (make-group "Morning Tasks" List-Morning))
+(define Group-Homework (make-group "Homework Tasks" List-Homework))
+
+; TODO #2: Finish designing the World program reminders.
+; You are welcome to be creative as to how the program
+; visualizes the group, the task, and completion status.
+; Hint: for each function we started, follow the template
+; closely to determine any further helper(s).
+
+
+; reminders : Group -> Nat
+; Visualizes an interactive reminders list
+; and returns the number of remaining incomplete
+; tasks at exit
+
+(define (reminders initial-group)
+  (num-not-complete
+   (big-bang initial-group
+     [to-draw draw-group]
+     [on-key key-group])))
+
+; num-not-complete : Group -> Nat
+; counts the number of incomplete tasks
+; in the group
+
+(define (num-not-complete group)
+  (cond
+    [(empty? (group-LoT group)) 0]
+    [(cons? (group-LoT group)) (if (boolean=? #false (task-done? (first (group-LoT group))))
+                                   (add1 (num-not-complete
+                                          (make-group (group-title group) (rest (group-LoT group)))))
+                                   (num-not-complete
+                                    (make-group (group-title group) (rest (group-LoT group)))))]))
+
+(check-expect (num-not-complete Group-Morning) 2)
+(check-expect (num-not-complete Group-Homework) 1)
+
+; draw-group : Group -> Image
+; visualizes the reminder group
+(define BACKGROUND (empty-scene 200 200))
+
+(define (draw-group group)
+  (overlay/offset (text (check-done? (first (group-LoT group))) 18 "black")
+                  0 -30
+                  (overlay/offset (text (task-desc (first (group-LoT group))) 18 "black")
+                                  0 0
+                                  (overlay/offset (text "Today:" 18 "black")
+                                                  0 60
+                                                  BACKGROUND))))
+; check-done? : task -> string
+; Interpretation: returns "Task Done" if true
+; and "Task Uncomplete" if false
+(define (check-done? task)
+  (cond
+    [(boolean=? #true (task-done? task)) "Task Done"]
+    [(boolean=? #false (task-done? task)) "Task Uncomplete"]))
+
+; key-group : Group KeyEvent -> Group
+; when "n" is pressed, rotate's the group's
+; task list (first goes on the end);
+; when " " is pressed, flips the completion
+; status of the current task
+(define (key-group group key)
+  (cond
+    [(key=? "n" key) (make-group (group-title group)
+                                 (append (rest (group-LoT group)) (list (first (group-LoT group)))))]
+    [(key=? " " key) (make-group (group-title group) (space-key-group group))]))
+
+; space-key-group : group -> LoT
+; Interpretation: returns the original LoT except
+; the first item has its done? value flipped
+(define (space-key-group group)
+  (append
+   (list
+    (make-task (task-desc (first (group-LoT group))) (not (task-done? (first (group-LoT group))))))
+   (rest (group-LoT group))))

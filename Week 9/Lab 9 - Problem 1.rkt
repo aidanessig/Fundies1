@@ -1,0 +1,246 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname |Lab 9 - Problem 1|) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+(require 2htdp/batch-io)
+
+; == Lab 9, Problem 1 ==
+
+; You are to design a set of functions below. Each has a set of
+; restrictions that apply to the problem, so pay attention to
+; the instructions for each TODO.
+
+
+; TODO #1: design the function alternate which, given two lists
+; produces a list of alternating elements from each list (and if
+; one list runs out of elements you should place all the remaining
+; elements in the other list at the end). Some tests have been
+; supplied for clarity.
+
+; Restrictions:
+; - Do NOT use ISL list abstractions.
+
+
+; alternate : [List-of Any] [List-of Any] -> [List-of Any]
+; produces a list resulting from alternating between the two
+; supplied lists
+(define (alternate LoI1 LoI2)
+  (cond
+    [(empty? LoI1) LoI2]
+    [(cons? LoI1)
+     (cons
+      (first LoI1)
+      (alternate LoI2 (rest LoI1)))]))
+
+
+(check-expect
+ (alternate '() '())
+ '())
+
+(check-expect
+ (alternate '() (list 1 "a"))
+ (list 1 "a"))
+
+(check-expect
+ (alternate (list 1 2 3) '())
+ (list 1 2 3))
+
+(check-expect
+ (alternate (list 1 2)
+            (list "a" "b" "c"))
+ (list 1 "a" 2 "b" "c"))
+
+(check-expect
+ (alternate (list "a" "b" "c") '())
+ (list "a" "b" "c"))
+
+; TODO #2: Design the function cross-product which, given two lists
+; produces a cross product of their elements. Some tests have been
+; supplied for clarity.
+
+; Restrictions:
+; - Do NOT use ISL list abstractions.
+
+(define (cross-product lst1 lst2)
+  (local [(define (crosser x 1st2)
+            (cond
+              [ (null? lst2) null]
+              [ (cons? lst2)
+                (cons (cons x (cons (first lst2) null))
+                      (crosser x (rest lst2)) ) ]))]
+    (cond
+      [(null? lst1) null]
+      [(cons? lst1)
+       (append (crosser (first lst1) lst2)
+               (cross-product (rest lst1) lst2))]) ))
+
+; cross-product : [List-of Any] [List-of Any] -> [List-of (list Any Any)]
+; produces the cross product of the two lists
+
+#|
+(check-expect
+ (cross-product '() '())
+ '())
+
+(check-expect
+ (cross-product (list 1 2) '())
+ '())
+
+(check-expect
+ (cross-product '() (list 1 2))
+ '())
+
+(check-expect
+ (cross-product (list 1 2) (list "a" "b" "c"))
+ (list (list 1 "a")
+       (list 1 "b")
+       (list 1 "c")
+       (list 2 "a")
+       (list 2 "b")
+       (list 2 "c")))
+|#
+
+
+
+; TODO #3: design the function mymap2, which takes in two lists and returns
+; the list of results of performing on operation on the first from each list,
+; the second, and so on. If one of the list runs out of elements, then stop
+; producing results. Some tests have been supplied for clarity.
+
+; Restrictions:
+; - Do NOT use ISL list abstractions.
+
+
+; mymap2 : [List-of Any] [List-of Any] [Any Any -> Any] -> [List-of Any]
+; produces a result list by applying the function to pairs of elements
+; from the supplied list (until one is empty)
+(define (mymap2 LoA1 LoA2 f)
+  (cond
+    [(or (empty? LoA1) (empty? LoA2)) '()]
+    [else (cons (f (first LoA1) (first LoA2)) (mymap2 (rest LoA1) (rest LoA2) f))]))
+
+(check-expect
+ (mymap2 '() '() *)
+ '())
+
+(check-expect
+ (mymap2 (list 2 3) (list 4) *)
+ (list 8))
+
+(check-expect
+ (mymap2 (list "a" "b")
+         (list "1" "2" "3")
+         string-append)
+ (list "a1" "b2"))
+
+(check-expect
+ (mymap2 (list "a" "c")
+         (list (list "x") (list 3 1 4))
+         (λ (s l) (string-append
+                   s
+                   "-"
+                   (number->string (length l)))))
+ (list "a-1" "c-3"))
+
+
+; TODO #4: design the function read-lines-or-empty that attempts to read
+; the lines of a file (via a supplied name) each as a string in a list,
+; or returns an empty list if the file is not found. Some tests have been
+; supplied for clarity.
+
+; Restrictions:
+; - Do NOT use ISL list abstractions.
+
+
+; read-lines-or-empty : String -> [List-of String]
+; attempts to read the lines of a file
+(define (read-lines-or-empty fpath)
+  (if (file-exists? fpath)
+      (read-lines fpath)
+      '()))
+
+(define BADFILE "BADFILENAME.SAD")
+
+(check-expect
+ (read-lines-or-empty BADFILE)
+ '())
+
+(check-expect
+ (read-lines-or-empty "progs.txt")
+ (list "CS" "DS" "CY"))
+
+(check-expect
+ (read-lines-or-empty "nums.txt")
+ (list "1800" "3000" "2550" "4300"))
+
+; TODO #5: design the function cat-files, which takes two files and produces
+; a list of all the lines of the first file (as strings) followed by the
+; second. If either file doesn't exist, interpret that as having no lines.
+; Some tests have been supplied for clarity.
+
+; Restrictions:
+; - Do NOT use ISL list abstractions.
+; - You are NOT allowed to use append; that would make it a bit too easy ;)
+
+; (But yes, you are encouraged to make use of prior functions you wrote
+; in this file to solve this problem.)
+
+
+; cat-files : String String -> [List-of String]
+; concatenates the supplied files
+(define (cat-files fpath1 fpath2)
+  (local [(define (append-lists l1 l2)
+            (cond
+              [(empty? l1) l2]
+              [(cons? l1)
+               (cons
+                (first l1)
+                (append-lists (rest l1) l2))]))]
+    (append-lists (read-lines-or-empty fpath1) (read-lines-or-empty fpath2))))
+    
+
+(check-expect
+ (cat-files "progs.txt" "nums.txt")
+ (list "CS" "DS" "CY"
+       "1800" "3000" "2550" "4300"))
+
+(check-expect
+ (cat-files "progs.txt" BADFILE)
+ (list "CS" "DS" "CY"))
+
+(check-expect
+ (cat-files BADFILE "progs.txt")
+ (list "CS" "DS" "CY"))
+
+
+
+
+; TODO #6: design the function cat-lines, which takes two files and produces
+; the result of concatenating all their lines together (with an intermediate
+; space). Some tests have been supplied for clarity.
+
+; Restrictions:
+; - Do NOT use ISL list abstractions.
+
+; (But yes, you are encouraged to make use of prior functions you wrote
+; in this file to solve this problem.)
+
+
+; cat-lines : String String -> [List-of String]
+; glues together the matching file lines
+
+
+#|
+(check-expect
+ (cat-lines "progs.txt" "nums.txt")
+ (list "CS 1800" "DS 3000" "CY 2550"))
+
+(check-expect
+ (cat-lines "progs.txt" BADFILE)
+ '())
+
+(check-expect
+ (cat-lines BADFILE "progs.txt")
+ '())
+|#
+
+

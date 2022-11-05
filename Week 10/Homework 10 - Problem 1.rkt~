@@ -1,0 +1,40 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname hw10p1-starter) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+; == Homework 10, Problem 1 ==
+
+; Consider a gradebook for a class.
+
+; In order to represent how individual assignments lead to a class
+; grade, you can think that there are assignment columns (each
+; with a name and total points) and calculated columns (each with
+; a name, operation, and columns over which to operate).
+; Operations include taking the simple average, dropping some
+; number of lowest values, or weighting the columns.
+
+; For example...
+; - a total column, representing a weighted average over...
+;   - a homework column (worth 30% of total), representing a simple average over...
+;     - 4 assignment columns (hw1-4; each out of 20pts)
+;   - a project column (out of 100pts; worth 50% of total)
+;   - a quizzes column (worth 20% of total), representing a weighted average over...
+;     - a pre-class quizzes column (worth 20% of quizzes; with the lowest dropped), broken into...
+;       - 3 columns (pcq1-3; each out of 5pts)
+;     - an in-class quizzes column (worth 80% of quizzes; with the lowest dropped), broken into...
+;       - 3 columns (icq1-3; each out of 10pts)
+
+
+; TODO #1: using the above description, design the data for a Gradebook.
+; You should represent the gradebook description above with your examples.
+
+
+
+; TODO #2: design the function valid-gradebook, which makes sure...
+; - the names of all columns aren't empty
+; - the number of dropped grades is always smaller
+;   than the number of columns in that calculated column
+; - the weights in a weighted average make sense: there is
+;   one for each column, they are all positive, and they
+;   add up to 100%
+
+

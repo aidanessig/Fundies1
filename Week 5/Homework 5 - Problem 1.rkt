@@ -1,0 +1,78 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-beginner-reader.ss" "lang")((modname |Homework 5 - Problem 1|) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+; == Homework 5, Problem 1 ==
+
+; TODO #1: Design a data definition for a list of strings.
+
+; A ListofStrings is one of:
+; - empty
+; - (cons String ListOfStrings)
+
+; process-LoS : ListofStrings -> ?
+(define (process-LoS LoS)
+  (cond
+    [(empty? LoS) ...]
+    [(cons? LoS) (... (first LoS)
+                      (process-LoS (rest LoS)) ...)]))
+
+(define LoS-1 (list "hello" "ball" "truck" "plane"))
+(define LoS-2 (list "fire" "computer" "sky"))
+(define LoS-3 (list))
+(define LoS-4 (list "pink" "pink" "pink"))
+                 
+; TODO #2: Design the function any-longer? that determines
+; if any string in a supplied list of strings is longer
+; than a supplied string.
+
+; any-longer? : [List-of-Strings] String -> Boolean
+; Interpretation: returns true if a string in LoS
+; is longer than 'input string' and false if otherwise
+(define (any-longer? LoS S)
+  (cond
+    [(empty? LoS) #false]
+    [(cons? LoS) (if (> (string-length (first LoS)) (string-length S))
+                     #true
+                     (any-longer? (rest LoS) S))]))
+
+(check-expect (any-longer? LoS-1 "hi") #true)
+(check-expect (any-longer? LoS-2 "telephone") #false)
+(check-expect (any-longer? LoS-3 "tall") #false)
+
+; TODO #3: Design the function num-occurrences that counts
+; the number of times a supplied string occurs within a
+; list of strings.
+
+; num-occurences : [List-of-Strings] String -> Nat
+; Interpretation: returns the number of times 
+; 'input string' appears in LoS
+(define (num-occurences LoS S)
+  (cond
+    [(empty? LoS) 0]
+    [(cons? LoS) (if (string=? (first LoS) S)
+                     (add1 (num-occurences (rest LoS) S))
+                     (num-occurences (rest LoS) S))]))
+
+(check-expect (num-occurences LoS-1 "hi") 0)
+(check-expect (num-occurences LoS-1 "plane") 1)
+(check-expect (num-occurences LoS-3 "phone") 0)
+(check-expect (num-occurences LoS-4 "pink") 3)
+
+
+; TODO #4: Design the function remove-occurrences that returns
+; a list of strings with all occurrences of a supplied string
+; removed from a supplied list of strings.
+
+; remove-occurences : [List-of-Strings] String -> [List-of-Strings]
+; Interpretation: returns a LoS without 'input string'
+; if it occurs in the list
+(define (remove-occurences LoS S)
+  (cond
+    [(empty? LoS) LoS]
+    [(cons? LoS) (if (string=? (first LoS) S)
+                     (remove-occurences (rest LoS) S)
+                     (cons (first LoS) (remove-occurences (rest LoS) S)))]))
+
+(check-expect (remove-occurences LoS-2 "sky") (list "fire" "computer"))
+(check-expect (remove-occurences LoS-1 "blue") LoS-1)
+(check-expect (remove-occurences LoS-3 "fire") LoS-3)

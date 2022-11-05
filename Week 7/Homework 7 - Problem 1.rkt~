@@ -1,0 +1,229 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-intermediate-reader.ss" "lang")((modname |Homework 7 - Problem 1|) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+(require 2htdp/image)
+
+; == Homework 7, Problem 1 ==
+
+; For each TODO below, refer to the following data definition,
+; and use pre-defined list abstraction(s) when appropriate.
+
+; Note #1: part of the credit for each problem will be the choice
+; of abstraction(s), so make sure they are a good match and lead
+; to an effective function design!
+
+; Note #2: just because we now have cool abstractions doesn't mean
+; you should forget about the design recipe and following templates
+; (which particularly come up for abstraction helpers)!
+
+
+(define-struct conf [title authors year venue page-start page-end doi])
+(define-struct journal [title authors year journal volume page-start page-end doi])
+
+; A ResearchPublication (RP) is one of:
+; - (make-conf String [NEList-of String] Nat String Nat Nat String)
+; - (make-journal String [NEList-of String] Nat String Nat Nat Nat String)
+; Interpretation: a research publication, either...
+; - a conference paper's title, author(s), year of publication, conference name,
+;   page start in the proceedings, page end in the proceedings,
+;   digital object identifier
+; - a journal article's title, author(s), year of publication, journal name,
+;   journal volume, page start in the volume, page end in the volume,
+;   digital object identifier
+
+; (Note: a DOI is just a unique identifier for publications
+;        https://en.wikipedia.org/wiki/Digital_object_identifier)
+
+
+(define
+  RP-CONF-1
+  (make-conf
+   (string-append
+    "An MS in CS for non-CS Majors: "
+    "Moving to Increase Diversity of Thought and Demographics in CS")
+   (list "Carla Brodley" "Megan Barry" "Aidan Connell" "Catherine Gill"
+         "Ian Gorton" "Benjamin Hescott" "Bryan Lackaye" "Cynthia LuBien"
+         "Leena Razzaq" "Amit Shesh" "Tiffani Williams" "Andrea Danyluk")
+   2020
+   (string-append
+    "SIGCSE '20: "
+    "Proceedings of the 51st ACM Technical Symposium on Computer Science Education")
+   1248 1254
+   "10.1145/3328778.3366802"))
+
+(define
+  RP-CONF-2
+  (make-conf
+   (string-append
+    "The Potential of Spatial Computing to Augment Memory: "
+    "Investigating Recall in Virtual Memory Palaces")
+   (list "Tara O’Grady" "Caglar Yildirim")
+   2019
+   "International Conference on Human-Computer Interaction"
+   414 422
+   "10.1007/978-3-030-23528-4_56"))
+
+(define
+  RP-JOURNAL-1
+  (make-journal
+   "Investigating sources of PII used in Facebook's targeted advertising"
+   (list "Giridhari Venkatadri" "Elena Lucherini" "Piotr Sapiezyński" "Alan Mislove")
+   2019
+   "Proceedings on Privacy Enhancing Technologies"
+   2019
+   227 244
+   "10.2478/popets-2019-0013"))
+
+(define
+  RP-JOURNAL-2
+  (make-journal
+   (string-append
+    "Scalable Methods to Integrate Task Knowledge with "
+    "the Three-Weight Algorithm for Hybrid Cognitive Processing via Optimization")
+   (list "Nate Derbinsky" "José Bento" "Jonathan S. Yedidia")
+   2014
+   "Biologically Inspired Cognitive Architectures"
+   8
+   107 117
+   "10.1016/j.bica.2014.03.007"))
+
+(define LRP-1
+  (list RP-CONF-1
+        RP-CONF-2
+        RP-JOURNAL-1
+        RP-JOURNAL-2))
+
+
+
+; TODO #1: design the function journal-only that accepts
+; a list of research publications and produces a list of
+; only the journal articles.
+
+; journal-only : [List-of-RP] -> [List-of-RP]
+; Interpretation: returns a filtered list of Research
+; Publications with only journal articles
+(define (journal-only LoRP)
+  (cond
+    [(empty? LoRP) '()]
+    [(cons? LoRP) (if (journal? (first LoRP))
+                      (cons (first LoRP) (journal-only (rest LoRP)))
+                      (journal-only (rest LoRP)))]))
+
+(check-expect (journal-only LRP-1) (list RP-JOURNAL-1
+                                         RP-JOURNAL-2))
+
+; TODO #2: design the function total-pages that accepts
+; a list of research publications and counts the total
+; number of pages. (Hint: counting pages when given start/
+; end pairs is a bit tricky; consider that if a paper
+; starts at page 1 and goes through page 3, it is actually
+; 3 full pages long. For reference, the provided list of
+; papers is 45 pages in total.)
+
+; total-pages : [List-of-RP] -> Nat
+; Interpretation: returns the totoal number of
+; pages in a list of research publications
+(define (total-pages LoRP)
+  (cond
+    [(empty? LoRP) 0]
+    [(cons? LoRP) (cond
+                    [(conf? (first LoRP)) (+ (+ 1 (- (conf-page-end (first LoRP))
+                                                     (conf-page-start (first LoRP))))
+                                             (total-pages (rest LoRP)))]
+                    [(journal? (first LoRP)) (+ (+ 1 (- (journal-page-end (first LoRP))
+                                                        (journal-page-start (first LoRP))))
+                                                (total-pages (rest LoRP)))])]))
+
+(check-expect (total-pages LRP-1) 45)
+
+; TODO #3: design the function takes-a-village? that
+; accepts a list of research publications and determines
+; if all publications have at least 4 authors.
+
+; takes-a-village? : [List-of-RP] -> Boolean
+; Interpretation: returns true if all publications
+; in the list have at least 4 authors
+(define (takes-a-village? LoRP)
+  (cond
+    [(empty? LoRP) #t]
+    [(cons? LoRP) (cond
+                    [(conf? (first LoRP)) (if (< (list-count (conf-authors (first LoRP))) 4)
+                                              #f
+                                              (takes-a-village? (rest LoRP)))]
+                    [(journal? (first LoRP)) (if (< (list-count (journal-authors (first LoRP))) 4)
+                                                 #f
+                                                 (takes-a-village? (rest LoRP)))])]))
+
+(check-expect (takes-a-village? LRP-1) #false)
+(check-expect (takes-a-village? (list RP-CONF-1 RP-JOURNAL-1)) #true)
+
+; list-count : [List-of-RP] -> Boolean
+; Interpretation: counts the number of
+; elements in a list
+(define (list-count LoRP)
+  (if (empty? LoRP)
+      0
+      (add1 (list-count (rest LoRP)))))
+
+; TODO #4: design the function doi-urls that accepts a
+; list of research publications and produces a corresponding
+; list of URLS for those publications, produced by simply
+; prefixing each with https://doi.org/ - try it in your
+; browser to see each one of the papers in this assignment :)
+
+
+
+; TODO #5: design the function contains-old-research? that
+; accepts a list of research publications and determines if
+; any of the publications are "old", which we'll define as
+; having been published before 2015 - in computing research,
+; that's basically a million years ;)
+
+
+
+; TODO #6: design the function title-pyramid that accepts a
+; list of research publications and produces a list of the
+; publication titles, ordered by increasing length.
+
+
+
+; TODO #7: design the function author-list that accepts a
+; list of research publications and produces a list of all
+; authors (including duplicates, if there are any). The list
+; should be sorted alphabetically (as the names appear; so,
+; for example, "Amit Shesh" comes before "Andrea Danyluk").
+
+
+
+; TODO #8: research papers often have a page limit and it
+; is important that authors remember to save space at the
+; end of their paper for a bibliography (a list of all the
+; prior work they refer to in the paper); you are to design
+; the function citation-space to help them. This function
+; accepts a number (representing how many references they
+; expect they'll need) and then produces text they can
+; temporarily copy into their paper as a space saver - here
+; is an example if they want to save space for 2 references...
+
+(define
+  CITATION-SPACE-2
+  (string-append
+   "[1] author information\n"
+   "title information\n"
+   "venue information\n"
+   "year & page information\n"
+   "[2] author information\n"
+   "title information\n"
+   "venue information\n"
+   "year & page information"))
+
+; The [#]'s should start at 1 and increase to the number
+; supplied to the function; each should have literally the
+; text shown above (re: author, title, venue, and year/page
+; information; and there should be a newline ("\n") between
+; each line of the result (though not after the last line).
+
+; (Note: if you'd like to see the effect of \n, just
+; use the text function on the example above.)
+
+
